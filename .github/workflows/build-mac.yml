@@ -21,6 +21,9 @@ jobs:
           export CPPFLAGS="-I/opt/homebrew/opt/ncurses/include"
           cd doom-ascii && make PLATFORM=unix
 
+      - name: Find binary
+        run: find doom-ascii -name "doom-ascii" -type f
+
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
