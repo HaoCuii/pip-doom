@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(file /c/Users/decub/OneDrive/Desktop/pip-doom/doom/bin/*)",
+      "Bash(git ls-tree:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(curl -s \"https://raw.githubusercontent.com/wojciech-graj/doom-ascii/master/src/doomgeneric_ascii.c\")"
+    ]
+  }
+}
