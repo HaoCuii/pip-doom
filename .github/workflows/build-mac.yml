@@ -1,0 +1,24 @@
+name: Build Mac Binary
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout doom-ascii source
+        uses: actions/checkout@v3
+        with:
+          repository: wojciech-graj/doom-ascii
+
+      - name: Install dependencies
+        run: brew install ncurses
+
+      - name: Build
+        run: cd src && make
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: doom-ascii-mac
+          path: src/doom_ascii/doom_ascii
