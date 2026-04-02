@@ -25,4 +25,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: doom-ascii-mac
-          path: doom-ascii/_unix/game/doom_ascii
+          path: doom-ascii/src/game/doom-ascii
