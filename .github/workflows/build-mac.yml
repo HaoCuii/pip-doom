@@ -13,19 +13,16 @@ jobs:
           path: doom-ascii
 
       - name: Install dependencies
-        run: |
-          export LDFLAGS="-L/opt/homebrew/opt/ncurses/lib"
-          export CPPFLAGS="-I/opt/homebrew/opt/ncurses/include"
-          brew install ncurses
+        run: brew install ncurses
 
       - name: Build
         run: |
           export LDFLAGS="-L/opt/homebrew/opt/ncurses/lib"
           export CPPFLAGS="-I/opt/homebrew/opt/ncurses/include"
-          cd doom-ascii/src && make
+          cd doom-ascii && make PLATFORM=unix
 
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
           name: doom-ascii-mac
-          path: doom-ascii/src/doom_ascii/doom_ascii
+          path: doom-ascii/_unix/game/doom_ascii
