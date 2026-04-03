@@ -33,12 +33,10 @@ def run_game():
         conout_h = msvcrt.get_osfhandle(conout.fileno())
         conin_h  = msvcrt.get_osfhandle(conin.fileno())
 
-        # Enable VT processing on real console output
         mode = ctypes.c_ulong()
         kernel32.GetConsoleMode(conout_h, ctypes.byref(mode))
         kernel32.SetConsoleMode(conout_h, mode.value | 0x0004)
 
-        # Resize console buffer to 80x50 — no scrollback, game fills whole screen
         class COORD(ctypes.Structure):
             _fields_ = [('X', ctypes.c_short), ('Y', ctypes.c_short)]
         class SMALL_RECT(ctypes.Structure):
@@ -68,7 +66,6 @@ def run_game():
 
         KEY_EVENT = 0x0001
 
-        # (VK code, PS/2 scan code, character) for every in-game key
         GAME_KEYS = [
             (0x57, 17, 'w'), (0x41, 30, 'a'),  # W, A
             (0x53, 31, 's'), (0x44, 32, 'd'),  # S, D
@@ -77,16 +74,6 @@ def run_game():
         ]
 
         def key_injector(stop_evt):
-            """
-            doom-ascii tracks key state via timestamp: a key is "held" only while
-            KEY_DOWN events keep arriving.  Windows auto-repeat fires for one key
-            at a time, so multi-key breaks and releases can mis-time.
-
-            Fix: poll GetAsyncKeyState at 100 Hz and write synthetic KEY_DOWN
-            events for every currently-held key via WriteConsoleInputW.  doom-ascii
-            reads these through its normal ReadConsoleInput path and sees all keys
-            simultaneously with fresh timestamps.
-            """
             while not stop_evt.is_set():
                 records = []
                 for vk, scan, ch in GAME_KEYS:
@@ -105,9 +92,9 @@ def run_game():
                     written = ctypes.c_ulong()
                     kernel32.WriteConsoleInputW(conin_h, buf, len(records),
                                                ctypes.byref(written))
-                time.sleep(0.010)  # 100 Hz
+                time.sleep(0.010)
 
-        # --- Phase 1: demo / attract mode ---
+        #DEMO MODE
         IGNORE_VKS = {0x01, 0x02, 0x04, 0x05, 0x06,
                       0x10, 0x11, 0x12,
                       0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5}
@@ -133,7 +120,7 @@ def run_game():
         conout.flush()
         kernel32.FlushConsoleInputBuffer(conin_h)
 
-        # --- Phase 2: real game with key-injector thread ---
+        #GAME MODE
         stop_evt = threading.Event()
         injector = threading.Thread(target=key_injector, args=(stop_evt,), daemon=True)
         injector.start()
