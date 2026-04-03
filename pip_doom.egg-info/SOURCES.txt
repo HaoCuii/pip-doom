@@ -1,0 +1,16 @@
+MANIFEST.in
+README.md
+setup.py
+doom/__init__.py
+doom/doom-ascii.cfg
+doom/doom1.wad
+doom/game.py
+doom/bin/doom-ascii
+doom/bin/doom-ascii_mac
+doom/bin/doom-ascii_win32.exe
+doom/bin/doom-ascii_win64.exe
+doom/bin/image.png
+pip_doom.egg-info/PKG-INFO
+pip_doom.egg-info/SOURCES.txt
+pip_doom.egg-info/dependency_links.txt
+pip_doom.egg-info/top_level.txt

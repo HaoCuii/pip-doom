@@ -17,6 +17,12 @@ def run_game():
     else:
         binary = os.path.join(bin_dir, 'doom-ascii')
 
+    if sys.platform == 'darwin':
+        subprocess.run(
+            ['xattr', '-d', 'com.apple.quarantine', binary],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+
     os.chmod(binary, 0o755)
 
     if sys.platform == 'win32':

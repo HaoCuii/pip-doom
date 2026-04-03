@@ -1,0 +1,3 @@
+recursive-include doom/bin *
+include doom/doom1.wad
+include doom/doom-ascii.cfg
