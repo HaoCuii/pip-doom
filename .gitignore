@@ -1,0 +1,4 @@
+savegame/
+.github/
+__pycache__/
+*.pyc
