@@ -21,7 +21,7 @@ except Exception:
 
 setup(
     name='pip-doom',
-    version='0.1.2',
+    version='0.1.5',
     description='Play Doom in your terminal',
     long_description=long_description,
     long_description_content_type='text/markdown',
