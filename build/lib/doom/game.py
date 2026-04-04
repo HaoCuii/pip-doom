@@ -15,6 +15,7 @@ def run_game():
     elif sys.platform == 'darwin':
         binary = os.path.join(bin_dir, 'doom-ascii_mac')
     else:
+        print('YOU ARE LINUX!')
         binary = os.path.join(bin_dir, 'doom-ascii')
 
     if sys.platform == 'darwin':
@@ -81,10 +82,15 @@ def run_game():
         ]
 
         def key_injector(stop_evt):
+            prev_pressed = set()
             while not stop_evt.is_set():
-                records = []
+                curr_pressed = set()
                 for vk, scan, ch in GAME_KEYS:
                     if user32.GetAsyncKeyState(vk) & 0x8000:
+                        curr_pressed.add(vk)
+                records = []
+                for vk, scan, ch in GAME_KEYS:
+                    if vk in curr_pressed:
                         r = INPUT_RECORD()
                         r.EventType                       = KEY_EVENT
                         r.Event.KeyEvent.bKeyDown         = 1
@@ -94,6 +100,19 @@ def run_game():
                         r.Event.KeyEvent.uChar.UnicodeChar = ch
                         r.Event.KeyEvent.dwControlKeyState = 0
                         records.append(r)
+                    elif vk in prev_pressed:
+                        r = INPUT_RECORD()
+                        r.EventType                       = KEY_EVENT
+                        r.Event.KeyEvent.bKeyDown         = 0
+                        r.Event.KeyEvent.wRepeatCount     = 1
+                        r.Event.KeyEvent.wVirtualKeyCode  = vk
+                        r.Event.KeyEvent.wVirtualScanCode = scan
+                        r.Event.KeyEvent.uChar.UnicodeChar = ch
+                        r.Event.KeyEvent.dwControlKeyState = 0
+                        records.append(r)
+                prev_pressed = curr_pressed
+                # flush stale queued events so DOWN events can't pile up
+                kernel32.FlushConsoleInputBuffer(conin_h)
                 if records:
                     buf     = (INPUT_RECORD * len(records))(*records)
                     written = ctypes.c_ulong()
@@ -155,36 +174,41 @@ def run_game():
         tty = open('/dev/tty', 'r+b', buffering=0)
         fd = tty.fileno()
         old_settings = termios.tcgetattr(fd)
-        # cbreak: disables echo + line buffering, keeps OPOST so display isn't broken
         tty_module.setcbreak(fd, termios.TCSANOW)
 
-        # DEMO MODE
-        demo_proc = subprocess.Popen(
-            [binary, '-iwad', wad, '-config', cfg],
-            stdin=tty, stdout=tty, stderr=tty
-        )
-        key_pressed = False
-        while demo_proc.poll() is None and not key_pressed:
-            r, _, _ = select.select([fd], [], [], 0.033)
-            if r:
-                key_pressed = True
-
-        if demo_proc.poll() is None:
-            demo_proc.kill()
-            demo_proc.wait()
-
-        # Clear screen and flush buffered input before starting real game
-        tty.write(b'\x1b[2J\x1b[3J\x1b[H\x1b[?25h\x1b[0m')
+        # Enter alternate screen so the game doesn't affect terminal scroll position
+        tty.write(b'\x1b[?1049h')
         tty.flush()
-        termios.tcflush(fd, termios.TCIFLUSH)
 
-        # GAME MODE
         try:
+            # DEMO MODE
+            demo_proc = subprocess.Popen(
+                [binary, '-iwad', wad, '-config', cfg],
+                stdin=tty, stdout=tty, stderr=tty
+            )
+            key_pressed = False
+            while demo_proc.poll() is None and not key_pressed:
+                r, _, _ = select.select([fd], [], [], 0.033)
+                if r:
+                    key_pressed = True
+
+            if demo_proc.poll() is None:
+                demo_proc.kill()
+                demo_proc.wait()
+
+            tty.write(b'\x1b[2J\x1b[3J\x1b[H\x1b[?25h\x1b[0m')
+            tty.flush()
+            termios.tcflush(fd, termios.TCIFLUSH)
+
+            # GAME MODE
             subprocess.call(
                 [binary, '-iwad', wad, '-config', cfg,
                  '-warp', '1', '1', '-skill', '3'],
                 stdin=tty, stdout=tty, stderr=tty
             )
         finally:
+            # Exit alternate screen — terminal returns to exactly where it was
+            tty.write(b'\x1b[?1049l')
+            tty.flush()
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         tty.close()
