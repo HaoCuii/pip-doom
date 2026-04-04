@@ -1,6 +1,6 @@
-Metadata-Version: 2.4
+Metadata-Version: 2.1
 Name: pip-doom
-Version: 0.1.1
+Version: 0.1.2
 Summary: Play Doom in your terminal
 Home-page: https://github.com/HaoCuii/pip-doom
 Author: Hao Cui
@@ -8,13 +8,6 @@ Classifier: Programming Language :: Python :: 3
 Classifier: Operating System :: OS Independent
 Requires-Python: >=3.7
 Description-Content-Type: text/markdown
-Dynamic: author
-Dynamic: classifier
-Dynamic: description
-Dynamic: description-content-type
-Dynamic: home-page
-Dynamic: requires-python
-Dynamic: summary
 
 # pip-doom
 

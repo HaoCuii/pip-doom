@@ -48,9 +48,10 @@ def run_game():
         class SMALL_RECT(ctypes.Structure):
             _fields_ = [('Left',  ctypes.c_short), ('Top',    ctypes.c_short),
                         ('Right', ctypes.c_short), ('Bottom', ctypes.c_short)]
-        kernel32.SetConsoleWindowInfo(conout_h, True,
-                                      ctypes.byref(SMALL_RECT(0, 0, 79, 49)))
         kernel32.SetConsoleScreenBufferSize(conout_h, COORD(80, 50))
+        kernel32.SetConsoleWindowInfo(
+            conout_h, True, ctypes.byref(SMALL_RECT(0, 0, 79, 49))
+        )
 
         # INPUT_RECORD layout (matches Windows SDK, 20 bytes total)
         class _UChar(ctypes.Union):
@@ -107,7 +108,8 @@ def run_game():
 
         demo_proc = subprocess.Popen(
             [binary, '-iwad', wad, '-config', cfg],
-            stdin=conin, stdout=conout, stderr=conout
+            stdin=conin, stdout=conout, stderr=conout,
+            cwd=os.path.dirname(binary)
         )
         key_pressed = False
         while demo_proc.poll() is None and not key_pressed:
@@ -134,7 +136,8 @@ def run_game():
             subprocess.call(
                 [binary, '-iwad', wad, '-config', cfg,
                  '-warp', '1', '1', '-skill', '3'],
-                stdin=conin, stdout=conout, stderr=conout
+                stdin=conin, stdout=conout, stderr=conout,
+                cwd=os.path.dirname(binary)
             )
         finally:
             stop_evt.set()
