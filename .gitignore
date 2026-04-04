@@ -3,3 +3,6 @@ savegame/
 __pycache__/
 *.pyc
 .venv/
+build/
+dist/
+*.egg-info/
