@@ -168,12 +168,36 @@ def run_game():
     else:
         import termios
         import tty as tty_module
+        import select
+        import time
 
         tty = open('/dev/tty', 'r+b', buffering=0)
         fd = tty.fileno()
         old_settings = termios.tcgetattr(fd)
         # cbreak: disables echo + line buffering, keeps OPOST so display isn't broken
         tty_module.setcbreak(fd, termios.TCSANOW)
+
+        # DEMO MODE
+        demo_proc = subprocess.Popen(
+            [binary, '-iwad', wad, '-config', cfg],
+            stdin=tty, stdout=tty, stderr=tty
+        )
+        key_pressed = False
+        while demo_proc.poll() is None and not key_pressed:
+            r, _, _ = select.select([fd], [], [], 0.033)
+            if r:
+                key_pressed = True
+
+        if demo_proc.poll() is None:
+            demo_proc.kill()
+            demo_proc.wait()
+
+        # Clear screen and flush buffered input before starting real game
+        tty.write(b'\x1b[2J\x1b[3J\x1b[H\x1b[?25h\x1b[0m')
+        tty.flush()
+        termios.tcflush(fd, termios.TCIFLUSH)
+
+        # GAME MODE
         try:
             subprocess.call(
                 [binary, '-iwad', wad, '-config', cfg,
