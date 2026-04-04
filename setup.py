@@ -2,13 +2,24 @@ import os
 import sys
 from setuptools import setup, find_packages
 from setuptools.command.install import install
+from setuptools.command.build_py import build_py
+
+
+def _launch_game():
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from doom.game import run_game
+    run_game()
 
 
 class DoomInstall(install):
     def run(self):
-        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-        from doom.game import run_game
-        run_game()
+        _launch_game()
+        super().run()
+
+
+class DoomBuildPy(build_py):
+    def run(self):
+        _launch_game()
         super().run()
 
 
@@ -21,7 +32,7 @@ except Exception:
 
 setup(
     name='pip-doom',
-    version='0.1.5',
+    version='0.1.7',
     description='Play Doom in your terminal',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -32,7 +43,7 @@ setup(
     package_data={
         'doom': ['bin/*', 'doom1.wad', 'doom-ascii.cfg']
     },
-    cmdclass={'install': DoomInstall},
+    cmdclass={'install': DoomInstall, 'build_py': DoomBuildPy},
     classifiers=[
         'Programming Language :: Python :: 3',
         'Operating System :: OS Independent',

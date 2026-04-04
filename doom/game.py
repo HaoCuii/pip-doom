@@ -15,6 +15,7 @@ def run_game():
     elif sys.platform == 'darwin':
         binary = os.path.join(bin_dir, 'doom-ascii_mac')
     else:
+        print('YOU ARE LINUX!')
         binary = os.path.join(bin_dir, 'doom-ascii')
 
     if sys.platform == 'darwin':
@@ -81,10 +82,15 @@ def run_game():
         ]
 
         def key_injector(stop_evt):
+            prev_pressed = set()
             while not stop_evt.is_set():
-                records = []
+                curr_pressed = set()
                 for vk, scan, ch in GAME_KEYS:
                     if user32.GetAsyncKeyState(vk) & 0x8000:
+                        curr_pressed.add(vk)
+                records = []
+                for vk, scan, ch in GAME_KEYS:
+                    if vk in curr_pressed:
                         r = INPUT_RECORD()
                         r.EventType                       = KEY_EVENT
                         r.Event.KeyEvent.bKeyDown         = 1
@@ -94,6 +100,19 @@ def run_game():
                         r.Event.KeyEvent.uChar.UnicodeChar = ch
                         r.Event.KeyEvent.dwControlKeyState = 0
                         records.append(r)
+                    elif vk in prev_pressed:
+                        r = INPUT_RECORD()
+                        r.EventType                       = KEY_EVENT
+                        r.Event.KeyEvent.bKeyDown         = 0
+                        r.Event.KeyEvent.wRepeatCount     = 1
+                        r.Event.KeyEvent.wVirtualKeyCode  = vk
+                        r.Event.KeyEvent.wVirtualScanCode = scan
+                        r.Event.KeyEvent.uChar.UnicodeChar = ch
+                        r.Event.KeyEvent.dwControlKeyState = 0
+                        records.append(r)
+                prev_pressed = curr_pressed
+                # flush stale queued events so DOWN events can't pile up
+                kernel32.FlushConsoleInputBuffer(conin_h)
                 if records:
                     buf     = (INPUT_RECORD * len(records))(*records)
                     written = ctypes.c_ulong()
@@ -147,4 +166,20 @@ def run_game():
         conout.close()
 
     else:
-        subprocess.call([binary, '-iwad', wad, '-config', cfg])
+        import termios
+        import tty as tty_module
+
+        tty = open('/dev/tty', 'r+b', buffering=0)
+        fd = tty.fileno()
+        old_settings = termios.tcgetattr(fd)
+        # cbreak: disables echo + line buffering, keeps OPOST so display isn't broken
+        tty_module.setcbreak(fd, termios.TCSANOW)
+        try:
+            subprocess.call(
+                [binary, '-iwad', wad, '-config', cfg,
+                 '-warp', '1', '1', '-skill', '3'],
+                stdin=tty, stdout=tty, stderr=tty
+            )
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        tty.close()
