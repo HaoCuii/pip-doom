@@ -21,7 +21,7 @@ The game launches automatically during install.
 `J` Strafe left  
 `K` Strafe right  
 `Space` Shoot / Use  
-`E` Open door / Interact
+`E` Open door / Interact 
 `1-7` Weapon select
 
 ## Source
